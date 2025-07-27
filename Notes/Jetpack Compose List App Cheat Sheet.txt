@@ -1,0 +1,250 @@
+Jetpack Compose List App Cheat Sheet
+
+A complete guide to building a functional list app in Android with Jetpack Compose
+1. Core Components
+ViewModel (State Management)
+kotlin
+
+class ListViewModel : ViewModel() {
+    // State
+    private val _items = mutableStateListOf("Task 1", "Task 2", "Task 3")
+    val items: List<String> = _items
+
+    // Add item
+    fun addItem(text: String) {
+        if (text.isNotBlank()) _items.add(text)
+    }
+
+    // Remove item
+    fun removeItem(item: String) {
+        _items.remove(item)
+    }
+
+    // Update item (optional)
+    fun updateItem(oldValue: String, newValue: String) {
+        val index = _items.indexOf(oldValue)
+        if (index != -1) _items[index] = newValue
+    }
+}
+
+2. Basic List UI
+Main Screen Layout
+kotlin
+
+@Composable
+fun ListScreen(viewModel: ListViewModel = viewModel()) {
+    var newItemText by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Input Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = newItemText,
+                onValueChange = { newItemText = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Add new item") }
+            )
+            
+            Spacer(Modifier.width(8.dp))
+            
+            Button(onClick = {
+                viewModel.addItem(newItemText)
+                newItemText = ""
+            }) {
+                Text("Add")
+            }
+        }
+
+        // List
+        LazyColumn(modifier = Modifier.padding(vertical = 8.dp)) {
+            items(viewModel.items) { item ->
+                ListItem(
+                    item = item,
+                    onDelete = { viewModel.removeItem(item) },
+                    onUpdate = { newText -> viewModel.updateItem(item, newText) }
+                )
+            }
+        }
+    }
+}
+
+3. List Item Component
+Custom List Item with Actions
+kotlin
+
+@Composable
+fun ListItem(item: String, onDelete: () -> Unit, onUpdate: (String) -> Unit) {
+    var isEditing by remember { mutableStateOf(false) }
+    var editedText by remember { mutableStateOf(item) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isEditing) {
+                TextField(
+                    value = editedText,
+                    onValueChange = { editedText = it },
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Text(
+                    text = item,
+                    modifier = Modifier.weight(1f),
+                    fontSize = 16.sp
+                )
+            }
+
+            IconButton(onClick = {
+                if (isEditing) {
+                    onUpdate(editedText)
+                }
+                isEditing = !isEditing
+            }) {
+                Icon(
+                    imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                    contentDescription = if (isEditing) "Save" else "Edit"
+                )
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, "Delete")
+            }
+        }
+    }
+}
+
+4. Common Features
+Swipe-to-Delete (Optional)
+kotlin
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeableListItem(item: String, onDelete: () -> Unit) {
+    val dismissState = rememberDismissState()
+
+    if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+        LaunchedEffect(Unit) { onDelete() }
+    }
+
+    SwipeToDismiss(
+        state = dismissState,
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Red)
+                    .padding(16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(Icons.Default.Delete, "Delete", tint = Color.White)
+            }
+        },
+        dismissContent = {
+            ListItem(item = item, onDelete = onDelete, onUpdate = {})
+        }
+    )
+}
+
+Persistent Storage (SharedPreferences)
+kotlin
+
+// In ViewModel
+private val sharedPref = context.getSharedPreferences("ListApp", Context.MODE_PRIVATE)
+
+init {
+    _items.addAll(sharedPref.getStringSet("items", emptySet())?.toList() ?: emptyList())
+}
+
+private fun saveItems() {
+    sharedPref.edit().putStringSet("items", _items.toSet()).apply()
+}
+
+// Call saveItems() after every modification
+
+5. Error Handling
+Error	Solution
+Preview not working	Remove viewModel() from preview composables
+List not updating	Use mutableStateListOf in ViewModel
+Keyboard covers input	Add Modifier.imePadding() to Column
+Unresolved reference: Icons	Add implementation("androidx.compose.material:material-icons-core")
+6. Advanced Features
+Search/Filter
+kotlin
+
+// In ViewModel
+val searchQuery = mutableStateOf("")
+val filteredItems: List<String>
+    get() = if (searchQuery.value.isBlank()) {
+        items
+    } else {
+        items.filter { it.contains(searchQuery.value, ignoreCase = true) }
+    }
+
+// In UI
+TextField(
+    value = viewModel.searchQuery.value,
+    onValueChange = { viewModel.searchQuery.value = it },
+    label = { Text("Search") }
+)
+
+Item Reordering (Drag & Drop)
+kotlin
+
+// Add dependency:
+implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+
+// Usage:
+ReorderableColumn(
+    state = rememberReorderState(),
+    onMove = { from, to -> viewModel.items.move(from.index, to.index) }
+) {
+    items(viewModel.items) { item ->
+        DraggableItem(key = item) {
+            ListItem(item = item, ...)
+        }
+    }
+}
+
+App Structure
+text
+
+📂 com.example.listapp
+├── 📄 MainActivity.kt
+├── 📄 ListViewModel.kt
+├── 📄 ListScreen.kt
+├── 📄 ListItem.kt
+└── 📄 Theme.kt
+
+🚀 You now have a fully functional list app with:
+
+    Add/delete items
+
+    Edit existing items
+
+    Swipe-to-delete (optional)
+
+    Persistent storage
+
+    Search functionality
+
+Need more? Add:
+✔ Checkboxes for tasks
+✔ Categories/tags
+✔ Animations
+✔ Multi-select operations
+
+Let me know if you'd like any modifications! 🎯

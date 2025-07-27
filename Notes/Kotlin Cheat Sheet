@@ -1,0 +1,428 @@
+1. Main Activity
+kotlin
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            YourAppTheme { // This comes from the Theme.kt file
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    YourAppScreen()
+                }
+            }
+        }
+    }
+}
+
+2. Basic Composable Function
+kotlin
+
+@Composable
+fun YourAppScreen() {
+    // Your UI components go here
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Hello, Android!")
+    }
+}
+
+Common UI Components
+1. Text
+kotlin
+
+Text(
+    text = "Hello World",
+    color = Color.Blue,
+    fontSize = 24.sp,
+    fontWeight = FontWeight.Bold,
+    modifier = Modifier.padding(8.dp)
+)
+
+2. Button
+kotlin
+
+Button(
+    onClick = { /* Action when clicked */ },
+    modifier = Modifier.padding(8.dp)
+) {
+    Text("Click Me")
+}
+
+3. TextField
+kotlin
+
+var text by remember { mutableStateOf("") }
+
+TextField(
+    value = text,
+    onValueChange = { newText -> text = newText },
+    label = { Text("Enter text") },
+    modifier = Modifier.fillMaxWidth()
+)
+
+4. Image
+kotlin
+
+Image(
+    painter = painterResource(id = R.drawable.your_image),
+    contentDescription = "Image description",
+    modifier = Modifier.size(100.dp)
+)
+
+5. Card
+kotlin
+
+Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp),
+    elevation = CardDefaults.cardElevation(4.dp)
+) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Card Title", fontWeight = FontWeight.Bold)
+        Text("Card content goes here")
+    }
+}
+
+Layouts
+1. Column (Vertical)
+kotlin
+
+Column(
+    modifier = Modifier.fillMaxSize(),
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    // Child components go here
+}
+
+2. Row (Horizontal)
+kotlin
+
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceEvenly,
+    verticalAlignment = Alignment.CenterVertically
+) {
+    // Child components go here
+}
+
+3. Box (Stack)
+kotlin
+
+Box(modifier = Modifier.fillMaxSize()) {
+    Text("Background text")
+    Text(
+        "Foreground text",
+        modifier = Modifier.align(Alignment.Center)
+    )
+}
+
+State Management
+1. Remember
+kotlin
+
+var count by remember { mutableStateOf(0) }
+
+Button(onClick = { count++ }) {
+    Text("Count is $count")
+}
+
+2. ViewModel (for more complex state)
+kotlin
+
+class MyViewModel : ViewModel() {
+    private val _count = mutableStateOf(0)
+    val count: State<Int> = _count
+    
+    fun increment() {
+        _count.value++
+    }
+}
+
+// In your composable:
+val viewModel: MyViewModel = viewModel()
+
+Button(onClick = { viewModel.increment() }) {
+    Text("Count is ${viewModel.count.value}")
+}
+
+Navigation
+1. Setup Navigation (in your app)
+kotlin
+
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    
+    NavHost(navController = navController, startDestination = "screen1") {
+        composable("screen1") { Screen1(navController) }
+        composable("screen2") { Screen2(navController) }
+    }
+}
+
+2. Navigating between screens
+kotlin
+
+// In Screen1.kt
+@Composable
+fun Screen1(navController: NavController) {
+    Button(onClick = { navController.navigate("screen2") }) {
+        Text("Go to Screen 2")
+    }
+}
+
+// In Screen2.kt
+@Composable
+fun Screen2(navController: NavController) {
+    Button(onClick = { navController.popBackStack() }) {
+        Text("Go Back")
+    }
+}
+
+Lists
+1. LazyColumn (Vertical List)
+kotlin
+
+val items = listOf("Item 1", "Item 2", "Item 3")
+
+LazyColumn {
+    items(items) { item ->
+        Text(
+            text = item,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+2. LazyRow (Horizontal List)
+kotlin
+
+LazyRow {
+    items(10) { index ->
+        Card(
+            modifier = Modifier
+                .size(100.dp)
+                .padding(8.dp)
+        ) {
+            Text("Item $index")
+        }
+    }
+}
+
+Common Modifiers
+kotlin
+
+Modifier
+    .fillMaxSize() // Fill available space
+    .fillMaxWidth()
+    .fillMaxHeight()
+    .size(100.dp) // Specific size
+    .padding(16.dp) // Add padding
+    .background(Color.Blue) // Background color
+    .border(2.dp, Color.Black) // Add border
+    .clickable { /* Handle click */ } // Make clickable
+    .align(Alignment.Center) // In Box layout
+
+Handling User Input
+1. Button with Click
+kotlin
+
+Button(onClick = { /* Action */ }) {
+    Text("Click Me")
+}
+
+2. Checkbox
+kotlin
+
+var checked by remember { mutableStateOf(false) }
+
+Row(verticalAlignment = Alignment.CenterVertically) {
+    Checkbox(
+        checked = checked,
+        onCheckedChange = { checked = it }
+    )
+    Text("Check me")
+}
+
+3. Radio Buttons
+kotlin
+
+var selectedOption by remember { mutableStateOf("Option1") }
+
+Column {
+    RadioButtonRow("Option1", selectedOption) { selectedOption = it }
+    RadioButtonRow("Option2", selectedOption) { selectedOption = it }
+}
+
+@Composable
+fun RadioButtonRow(text: String, selected: String, onSelected: (String) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(
+            selected = (text == selected),
+            onClick = { onSelected(text) }
+        )
+        Text(text)
+    }
+}
+
+4. Switch
+kotlin
+
+var isSwitchOn by remember { mutableStateOf(false) }
+
+Row(verticalAlignment = Alignment.CenterVertically) {
+    Switch(
+        checked = isSwitchOn,
+        onCheckedChange = { isSwitchOn = it }
+    )
+    Text("Toggle me")
+}
+
+Dialogs
+1. Alert Dialog
+kotlin
+
+var showDialog by remember { mutableStateOf(false) }
+
+Button(onClick = { showDialog = true }) {
+    Text("Show Dialog")
+}
+
+if (showDialog) {
+    AlertDialog(
+        onDismissRequest = { showDialog = false },
+        title = { Text("Title") },
+        text = { Text("Dialog content goes here") },
+        confirmButton = {
+            Button(onClick = { showDialog = false }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            Button(onClick = { showDialog = false }) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+Theming
+1. Custom Theme (in Theme.kt)
+kotlin
+
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF6200EE),
+    secondary = Color(0xFF03DAC6),
+    // Other colors...
+)
+
+@Composable
+fun YourAppTheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = LightColorScheme,
+        typography = Typography,
+        content = content
+    )
+}
+
+Common Patterns
+1. Conditional UI
+kotlin
+
+var isLoading by remember { mutableStateOf(true) }
+
+if (isLoading) {
+    CircularProgressIndicator()
+} else {
+    Text("Content loaded!")
+}
+
+2. Loading Data
+kotlin
+
+var data by remember { mutableStateOf<List<String>?>(null) }
+
+LaunchedEffect(Unit) {
+    data = loadData() // Your data loading function
+}
+
+when {
+    data == null -> CircularProgressIndicator()
+    data!!.isEmpty() -> Text("No data available")
+    else -> LazyColumn {
+        items(data!!) { item ->
+            Text(item)
+        }
+    }
+}
+
+Important Gradle Dependencies (app/build.gradle.kts)
+kotlin
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation(platform("androidx.compose:compose-bom:2024.02.02"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    
+    // For ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    
+    // For navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.02"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+Common Issues and Fixes
+
+    Preview not working: Make sure you have @Preview annotation and your composable doesn't require parameters
+    kotlin
+
+    @Preview(showBackground = true)
+    @Composable
+    fun PreviewYourApp() {
+        YourAppTheme {
+            YourAppScreen()
+        }
+    }
+
+    Missing imports: Android Studio can usually add these for you with Alt+Enter (Windows) or Option+Return (Mac)
+
+    State not updating: Make sure you're using mutableStateOf and the variable is declared with var and by remember
+
+    App crashes on launch: Check Logcat for errors and ensure all required dependencies are added
+
+Good luck on your exam! Remember to:
+
+    Start with a simple working version first
+
+    Test each component as you build it
+
+    Keep your code organized
+
+    Use descriptive names for variables and functions
+
+    Don't panic if something doesn't work - check for typos first!
+

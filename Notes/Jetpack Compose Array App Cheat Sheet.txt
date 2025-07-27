@@ -1,0 +1,188 @@
+Jetpack Compose Array App Cheat Sheet
+
+This cheat sheet helps you build a simple array/list app in Android Studio using Jetpack Compose. The app will:
+✅ Display an array of items
+✅ Allow adding new items
+✅ Allow deleting items
+✅ Support basic UI interactions
+1. Setup (Gradle Dependencies)
+
+Ensure these dependencies are in app/build.gradle.kts:
+kotlin
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation(platform("androidx.compose:compose-bom:2024.02.02"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+}
+
+2. Define the ViewModel (State Management)
+kotlin
+
+class ArrayViewModel : ViewModel() {
+    private val _items = mutableStateListOf("Apple", "Banana", "Orange")
+    val items: List<String> = _items
+
+    fun addItem(newItem: String) {
+        _items.add(newItem)
+    }
+
+    fun removeItem(item: String) {
+        _items.remove(item)
+    }
+}
+
+3. Create the Main Screen (UI)
+kotlin
+
+@Composable
+fun ArrayAppScreen(viewModel: ArrayViewModel = viewModel()) {
+    var newItemText by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Input Field
+        TextField(
+            value = newItemText,
+            onValueChange = { newItemText = it },
+            label = { Text("Add new item") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Add Button
+        Button(
+            onClick = {
+                if (newItemText.isNotBlank()) {
+                    viewModel.addItem(newItemText)
+                    newItemText = ""
+                }
+            },
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Text("Add Item")
+        }
+
+        // List of Items
+        LazyColumn {
+            items(viewModel.items) { item ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(item, fontSize = 18.sp)
+                    IconButton(onClick = { viewModel.removeItem(item) }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                }
+            }
+        }
+    }
+}
+
+4. Update MainActivity
+kotlin
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            YourAppTheme { // Replace with your theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ArrayAppScreen()
+                }
+            }
+        }
+    }
+}
+
+5. Common Errors & Fixes
+Error	Fix
+Unresolved reference: viewModel	Add implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+Preview not working	Wrap in @Preview and remove viewModel dependency
+List not updating	Use mutableStateListOf in ViewModel
+Keyboard covers TextField	Add Modifier.imePadding() to Column
+App crashes on empty input	Add if (newItemText.isNotBlank()) check
+6. Enhancements (Optional)
+a. Add Item Swipe-to-Delete
+kotlin
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeToDeleteItem(item: String, onDelete: () -> Unit) {
+    val dismissState = rememberDismissState()
+    
+    if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+        onDelete()
+    }
+
+    SwipeToDismiss(
+        state = dismissState,
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Red)
+                    .padding(16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(Icons.Default.Delete, "Delete", tint = Color.White)
+            }
+        },
+        dismissContent = {
+            Text(item, modifier = Modifier.padding(16.dp))
+        }
+    )
+}
+
+Usage: Replace Row in LazyColumn with SwipeToDeleteItem.
+b. Save Array to SharedPreferences
+kotlin
+
+// In ViewModel
+private val sharedPref = context.getSharedPreferences("ArrayApp", Context.MODE_PRIVATE)
+
+init {
+    _items.addAll(sharedPref.getStringSet("items", emptySet()) ?: emptySet())
+}
+
+fun saveItems() {
+    sharedPref.edit().putStringSet("items", _items.toSet()).apply()
+}
+
+Call saveItems() whenever the list changes.
+Final App Structure
+text
+
+📂 com.example.arrayapp
+├── 📄 MainActivity.kt (Entry point)
+├── 📄 ArrayViewModel.kt (State management)
+├── 📄 ArrayAppScreen.kt (UI)
+└── 📄 Theme.kt (Optional theming)
+
+🚀 Run the app! You now have a working array app with:
+✔ Add items (TextField + Button)
+✔ Delete items (Click or swipe)
+✔ Persistent storage (Optional)
+
+Need more features?
+
+    Add edit functionality
+
+    Implement search/filter
+
+    Add animations
